@@ -17,6 +17,7 @@ class Playground(QFrame):
         QFrame.__init__(self)
         self.game = controller
         self.mine_image = QPixmap("images/mine.png")
+        self.mine_red_image = QPixmap("images/mine_red.png")
         self.cells = [[Cell() for x in range(CELL_COUNT)] for y in range(CELL_COUNT)]
         self.reset()
 
@@ -54,6 +55,7 @@ class Playground(QFrame):
             return
         if cell.mine:
             cell.open = True
+            cell.current = True
             print("boom!")
             self._open_all_mines()
             self.game.stop_game(False)
@@ -76,7 +78,11 @@ class Playground(QFrame):
                 sz = (rect.size() - self.mine_image.size())
                 x = sz.width() // 2
                 y = sz.height() // 2
-                painter.drawPixmap(rect.x() + x, rect.y() + y, self.mine_image)
+                if cell.current:
+                    painter.fillRect(rect, Qt.red)
+                    painter.drawPixmap(rect.x() + x, rect.y() + y, self.mine_red_image)
+                else:
+                    painter.drawPixmap(rect.x() + x, rect.y() + y, self.mine_image)
             else:
                 if cell.border != 0:
                     # draw number
@@ -98,7 +104,8 @@ class Playground(QFrame):
     def _open_all_mines(self):
         for i in range(CELL_COUNT):
             for j in range(CELL_COUNT):
-                self.cells[i][j].open = True
+                if self.cells[i][j].mine:
+                    self.cells[i][j].open = True
 
     def _open_cells_recursively(self, i, j):
         cell = self.cells[i][j]

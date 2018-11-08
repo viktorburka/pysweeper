@@ -3,3 +3,4 @@ class Cell:
         self.open = False
         self.mine = False
         self.border = 0
+        self.current = False
