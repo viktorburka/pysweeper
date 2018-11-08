@@ -1,14 +1,17 @@
 import sys
-import random
 
-from PySide2.QtWidgets import QApplication, QWidget, QFrame, QVBoxLayout
+from PySide2.QtWidgets import QApplication, QWidget, QFrame, QVBoxLayout, QMessageBox
 from PySide2.QtGui import QPalette, QColor
 from playground import Playground
+from game_controller import GameController
 
 
-class MyWidget(QWidget):
+class PySweeperWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
+
+        controller = GameController()
+        controller.gameOver.connect(self.game_over)
 
         palette = self.palette()
         palette.setColor(QPalette.Background, QColor(220, 220, 220))
@@ -21,7 +24,7 @@ class MyWidget(QWidget):
         self.header.setLineWidth(4)
         self.header.setMidLineWidth(4)
 
-        self.main = Playground()
+        self.main = Playground(controller)
         self.main.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.main.setFixedHeight(280)
         self.main.setLineWidth(4)
@@ -34,10 +37,20 @@ class MyWidget(QWidget):
         self.layout.addWidget(self.main)
         self.setLayout(self.layout)
 
+    def game_over(self, result):
+        print("result: {}".format(result))
+        msg = "Congratulations. You won!" if result else "Sorry you lost."
+        question = "{} Would you like to play again?".format(msg)
+        answer = QMessageBox().question(self, 'Game Over', question, QMessageBox.Yes, QMessageBox.No)
+        if answer == QMessageBox.Yes:
+            self.main.reset()
+        else:
+            app.quit()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    widget = MyWidget()
+    widget = PySweeperWidget()
     widget.setFixedSize(300, 360)
     widget.show()
     sys.exit(app.exec_())

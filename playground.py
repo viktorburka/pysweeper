@@ -7,15 +7,17 @@ from PySide2.QtCore import Qt, QRect, QPoint
 from cell import Cell
 
 CELL_COUNT = 9
-MINE_COUNT = 10
-# MINE_COUNT = 60
+# MINE_COUNT = 10
+MINE_COUNT = 60
 CELL_SIZE = 30
 
 
 class Playground(QFrame):
-    def __init__(self):
+    def __init__(self, controller):
         QFrame.__init__(self)
+        self.game = controller
         self.mine_image = QPixmap("images/mine.png")
+        self.cells = [[Cell() for x in range(CELL_COUNT)] for y in range(CELL_COUNT)]
         self.reset()
 
     def paintEvent(self, paintEvent):
@@ -52,6 +54,8 @@ class Playground(QFrame):
         cell.open = True
         if cell.mine:
             print("boom!")
+            self._open_all_mines()
+            self.game.stop_game(False)
         # call parent widget mouse click method
         QFrame.mousePressEvent(self, mouseEvent)
         # repaint the widget
@@ -78,15 +82,26 @@ class Playground(QFrame):
         inside_ver_edge = pos.y() <= bevel_width or pos.y() >= self.height() - bevel_width
         return inside_hor_edge or inside_ver_edge
 
+    def _open_all_mines(self):
+        for i in range(CELL_COUNT):
+            for j in range(CELL_COUNT):
+                self.cells[i][j].open = True
+
     def reset(self):
-        self.cells = [[Cell() for x in range(CELL_COUNT)] for y in range(CELL_COUNT)]
         count = MINE_COUNT
+        # reset all fields
+        for i in range(CELL_COUNT):
+            for j in range(CELL_COUNT):
+                self.cells[i][j].open = False
+                self.cells[i][j].mine = False
+        # populate mines
         while count > 0:
             i = random.randint(0, CELL_COUNT - 1)
             j = random.randint(0, CELL_COUNT - 1)
             if not self.cells[i][j].mine:
                 self.cells[i][j].mine = True
                 count -= 1
+        self.update()
         # for i in range(CELL_COUNT):
         #     for j in range(CELL_COUNT):
         #         print(self.cells[i][j].open, end=" ")
