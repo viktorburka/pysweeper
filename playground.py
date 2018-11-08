@@ -7,8 +7,8 @@ from PySide2.QtCore import Qt, QRect, QPoint
 from cell import Cell
 
 CELL_COUNT = 9
-# MINE_COUNT = 10
-MINE_COUNT = 60
+MINE_COUNT = 10
+# MINE_COUNT = 60
 CELL_SIZE = 30
 
 
@@ -43,19 +43,24 @@ class Playground(QFrame):
         pos = mouseEvent.pos() - QPoint(self.lineWidth(), self.lineWidth())
         i = pos.x() // CELL_SIZE
         j = pos.y() // CELL_SIZE
-        print("pos = {}".format(pos))
-        print("i = {}, j = {}".format(i, j))
         # due to imperfect bevel size there might be one pixel on and off
         # that causes the index go beyond the limit. we simply treat it as clicked on bevel
         if i == CELL_COUNT or j == CELL_COUNT:
             print("clicked on bevel")
             return
         cell = self.cells[i][j]
-        cell.open = True
+        # check if clicked on already opened cell
+        if cell.open:
+            return
         if cell.mine:
+            cell.open = True
             print("boom!")
             self._open_all_mines()
             self.game.stop_game(False)
+        else:
+            # recursively open cells around current one
+            self._open_cells_recursively(i, j)
+            cell.open = True
         # call parent widget mouse click method
         QFrame.mousePressEvent(self, mouseEvent)
         # repaint the widget
@@ -72,6 +77,14 @@ class Playground(QFrame):
                 x = sz.width() // 2
                 y = sz.height() // 2
                 painter.drawPixmap(rect.x() + x, rect.y() + y, self.mine_image)
+            else:
+                if cell.border != 0:
+                    # draw number
+                    font = painter.font()
+                    font.setPixelSize(rect.height())
+                    painter.setFont(font)
+                    painter.setPen(Qt.blue)
+                    painter.drawText(rect, Qt.AlignHCenter | Qt.AlignVCenter, str(cell.border))
         painter.setPen(Qt.black)
         painter.drawRect(rect.adjusted(0, 0, -1, -1))
         painter.restore()
@@ -87,6 +100,36 @@ class Playground(QFrame):
             for j in range(CELL_COUNT):
                 self.cells[i][j].open = True
 
+    def _open_cells_recursively(self, i, j):
+        cell = self.cells[i][j]
+        x = [-1, 0, 1, 1, 1, 0, -1, -1]
+        y = [-1, -1, -1, 0, 1, 1, 1, 0]
+        if not cell.open and not cell.mine:
+            count = self._mines_around(i, j, CELL_COUNT)
+            cell.open = True
+            if count == 0:
+                for m in range(len(x)):
+                    adj_i = i + x[m]
+                    adj_j = j + y[m]
+                    if (adj_i < 0 or adj_i >= CELL_COUNT) or (adj_j < 0 or adj_j >= CELL_COUNT):
+                        continue
+                    self._open_cells_recursively(adj_i, adj_j)
+            else:
+                cell.border = count
+
+    def _mines_around(self, i, j, boundary):
+        x = [-1,  0,  1, 1, 1, 0, -1, -1]
+        y = [-1, -1, -1, 0, 1, 1,  1,  0]
+        count = 0
+        for m in range(len(x)):
+            adj_i = i + x[m]
+            adj_j = j + y[m]
+            if (adj_i < 0 or adj_i >= boundary) or (adj_j < 0 or adj_j >= boundary):
+                continue
+            if self.cells[adj_i][adj_j].mine:
+                count += 1
+        return count
+
     def reset(self):
         count = MINE_COUNT
         # reset all fields
@@ -94,6 +137,7 @@ class Playground(QFrame):
             for j in range(CELL_COUNT):
                 self.cells[i][j].open = False
                 self.cells[i][j].mine = False
+                self.cells[i][j].border = 0
         # populate mines
         while count > 0:
             i = random.randint(0, CELL_COUNT - 1)
@@ -102,8 +146,3 @@ class Playground(QFrame):
                 self.cells[i][j].mine = True
                 count -= 1
         self.update()
-        # for i in range(CELL_COUNT):
-        #     for j in range(CELL_COUNT):
-        #         print(self.cells[i][j].open, end=" ")
-        #     print()
-
