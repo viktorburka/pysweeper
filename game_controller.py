@@ -48,19 +48,6 @@ class GameController(QObject):
             else:
                 cell.border = count
 
-    def mines_around(self, i, j, boundary):
-        x = [-1,  0,  1, 1, 1, 0, -1, -1]
-        y = [-1, -1, -1, 0, 1, 1,  1,  0]
-        count = 0
-        for m in range(len(x)):
-            adj_i = i + x[m]
-            adj_j = j + y[m]
-            if (adj_i < 0 or adj_i >= boundary) or (adj_j < 0 or adj_j >= boundary):
-                continue
-            if self.cells[adj_i][adj_j].mine:
-                count += 1
-        return count
-
     def reset(self):
         self.set_flags_count(self.MINE_COUNT)
         count = self.MINE_COUNT
@@ -75,6 +62,19 @@ class GameController(QObject):
             if not self.cells[i][j].mine:
                 self.cells[i][j].mine = True
                 count -= 1
+
+    def mines_around(self, i, j, boundary):
+        x = [-1,  0,  1, 1, 1, 0, -1, -1]
+        y = [-1, -1, -1, 0, 1, 1,  1,  0]
+        count = 0
+        for m in range(len(x)):
+            adj_i = i + x[m]
+            adj_j = j + y[m]
+            if (adj_i < 0 or adj_i >= boundary) or (adj_j < 0 or adj_j >= boundary):
+                continue
+            if self.cells[adj_i][adj_j].mine:
+                count += 1
+        return count
 
     def stop_game(self, win):
         self.gameOver.emit(win)

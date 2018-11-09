@@ -6,6 +6,7 @@ from PySide2.QtWidgets import QSpacerItem
 from PySide2.QtWidgets import QSizePolicy
 from PySide2.QtGui import QPalette
 from PySide2.QtCore import Qt
+from PySide2.QtCore import QTimer
 
 
 class StatsWidget(QFrame):
@@ -14,6 +15,13 @@ class StatsWidget(QFrame):
 
         self.controller = controller
         self.controller.flagsCountChanged.connect(self.update_flags_count)
+        self.controller.gameReset.connect(self.reset_timer)
+
+        self.timer_val = 0
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.increment_timer)
+        self.timer.start(1000)
 
         self.flags = QLabel("0")
         self.flags.setFixedWidth(50)
@@ -59,6 +67,16 @@ class StatsWidget(QFrame):
 
     def update_flags_count(self, count):
         self.flags.setText(str(count))
+
+    def reset_timer(self):
+        self.timer.stop()
+        self.timer_val = 0
+        self.seconds.setText(str(self.timer_val))
+        self.timer.start()
+
+    def increment_timer(self):
+        self.timer_val += 1
+        self.seconds.setText(str(self.timer_val))
 
     def restart_game(self):
         self.controller.restart_game()
