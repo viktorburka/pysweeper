@@ -18,6 +18,8 @@ class Playground(QFrame):
         self.game = controller
         self.mine_image = QPixmap("images/mine.png")
         self.mine_red_image = QPixmap("images/mine_red.png")
+        self.flag_image = QPixmap("images/flag.png")
+        self.cell_raised_image = QPixmap("images/cell_raised.png")
         self.cells = [[Cell() for x in range(CELL_COUNT)] for y in range(CELL_COUNT)]
         self.reset()
 
@@ -53,16 +55,21 @@ class Playground(QFrame):
         # check if clicked on already opened cell
         if cell.open:
             return
-        if cell.mine:
-            cell.open = True
-            cell.current = True
-            print("boom!")
-            self._open_all_mines()
-            self.game.stop_game(False)
+        if mouseEvent.button() == Qt.LeftButton:
+            if cell.mine:
+                cell.open = True
+                cell.current = True
+                print("boom!")
+                self._open_all_mines()
+                self.game.stop_game(False)
+            else:
+                # recursively open cells around current one
+                self._open_cells_recursively(i, j)
+                cell.open = True
         else:
-            # recursively open cells around current one
-            self._open_cells_recursively(i, j)
-            cell.open = True
+            if self.game.flags > 0:
+                cell.flag = True
+                self.game.flags -= 1
         # call parent widget mouse click method
         QFrame.mousePressEvent(self, mouseEvent)
         # repaint the widget
@@ -71,7 +78,13 @@ class Playground(QFrame):
     def _draw_cell(self, painter, rect, cell):
         painter.save()
         if not cell.open:
-            painter.fillRect(rect, Qt.gray)
+            painter.drawPixmap(rect.x(), rect.y(), self.cell_raised_image)
+            if cell.flag:
+                sz = (rect.size() - self.flag_image.size())
+                x = sz.width() // 2
+                y = sz.height() // 2
+                painter.drawPixmap(rect.x() + x, rect.y() + y, self.flag_image)
+            painter.setPen(Qt.black)
         else:
             painter.fillRect(rect, Qt.lightGray)
             if cell.mine:
@@ -91,7 +104,8 @@ class Playground(QFrame):
                     painter.setFont(font)
                     painter.setPen(Qt.blue)
                     painter.drawText(rect, Qt.AlignHCenter | Qt.AlignVCenter, str(cell.border))
-        painter.setPen(Qt.black)
+            painter.setPen(Qt.gray)
+        # painter.setPen(Qt.black)
         painter.drawRect(rect.adjusted(0, 0, -1, -1))
         painter.restore()
 
@@ -142,9 +156,7 @@ class Playground(QFrame):
         # reset all fields
         for i in range(CELL_COUNT):
             for j in range(CELL_COUNT):
-                self.cells[i][j].open = False
-                self.cells[i][j].mine = False
-                self.cells[i][j].border = 0
+                self.cells[i][j].reset()
         # populate mines
         while count > 0:
             i = random.randint(0, CELL_COUNT - 1)
