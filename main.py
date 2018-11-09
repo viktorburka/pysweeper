@@ -38,7 +38,6 @@ class PySweeperWidget(QWidget):
         self.setLayout(self.layout)
 
     def game_over(self, result):
-        print("result: {}".format(result))
         msg = "Congratulations. You won!" if result else "Sorry you lost."
         question = "{} Would you like to play again?".format(msg)
         answer = QMessageBox().question(self, 'Game Over', question, QMessageBox.Yes, QMessageBox.No)
