@@ -4,6 +4,7 @@ from PySide2.QtWidgets import QApplication, QWidget, QFrame, QVBoxLayout, QMessa
 from PySide2.QtGui import QPalette, QColor
 from playground import Playground
 from game_controller import GameController
+from statswidget import StatsWidget
 
 
 class PySweeperWidget(QWidget):
@@ -18,7 +19,7 @@ class PySweeperWidget(QWidget):
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
-        self.header = QFrame()
+        self.header = StatsWidget(controller)
         self.header.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header.setFixedHeight(50)
         self.header.setLineWidth(4)
