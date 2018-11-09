@@ -1,0 +1,1 @@
+<img src="https://github.com/viktorburka/pysweeper/blob/master/pysweeper/doc/readme-md/pysweeper-screenshot.png" width="296" height="380">
