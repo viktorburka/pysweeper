@@ -12,6 +12,9 @@ class StatsWidget(QFrame):
     def __init__(self, controller):
         QFrame.__init__(self)
 
+        self.controller = controller
+        self.controller.flagsCountChanged.connect(self.update_flags_count)
+
         self.flags = QLabel("0")
         self.flags.setFixedWidth(50)
         self.flags.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -28,6 +31,7 @@ class StatsWidget(QFrame):
 
         self.reset = QPushButton()
         self.reset.setFixedSize(45, 45)
+        self.reset.clicked.connect(self.restart_game)
 
         self.seconds = QLabel("0")
         self.seconds.setFixedWidth(50)
@@ -53,3 +57,8 @@ class StatsWidget(QFrame):
         self.layout.addWidget(self.seconds)
         self.setLayout(self.layout)
 
+    def update_flags_count(self, count):
+        self.flags.setText(str(count))
+
+    def restart_game(self):
+        self.controller.restart_game()

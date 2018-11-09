@@ -13,6 +13,8 @@ class Playground(QFrame):
         self.mine_red_image = QPixmap("images/mine_red.png")
         self.flag_image = QPixmap("images/flag.png")
         self.cell_raised_image = QPixmap("images/cell_raised.png")
+
+        controller.gameReset.connect(self.repaint)
         self.reset()
 
     def paintEvent(self, paintEvent):
@@ -49,20 +51,26 @@ class Playground(QFrame):
         if cell.open:
             return
         if mouseEvent.button() == Qt.LeftButton:
-            if cell.mine:
-                cell.open = True
-                cell.current = True
-                print("boom!")
-                self._open_all_mines()
-                self.game.stop_game(False)
-            else:
-                # recursively open cells around current one
-                self.game.open_cells_recursively(i, j)
-                cell.open = True
+            if not cell.flag:  # if flag is set, don't do anything
+                if cell.mine:
+                    cell.open = True
+                    cell.current = True
+                    print("boom!")
+                    self._open_all_mines()
+                    self.game.stop_game(False)
+                else:
+                    # recursively open cells around current one
+                    self.game.open_cells_recursively(i, j)
+                    cell.open = True
         else:
-            if self.game.flags > 0:
-                cell.flag = True
-                self.game.flags -= 1
+            if not cell.open:
+                if cell.flag:  # if flag already set, remote it
+                    cell.flag = False
+                    self.game.set_flags_count(self.game.flags + 1)
+                else:  # otherwise set the flag
+                    if self.game.flags > 0:
+                        cell.flag = True
+                        self.game.set_flags_count(self.game.flags - 1)
         # call parent widget mouse click method
         QFrame.mousePressEvent(self, mouseEvent)
         # repaint the widget
@@ -114,5 +122,4 @@ class Playground(QFrame):
                     self.game.cells[i][j].open = True
 
     def reset(self):
-        self.game.reset()
-        self.update()
+        self.game.restart_game()

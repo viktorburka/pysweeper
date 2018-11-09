@@ -12,12 +12,22 @@ class GameController(QObject):
     CELL_SIZE = 30
 
     gameOver = Signal(bool)
+    gameReset = Signal()
+    flagsCountChanged = Signal(int)
 
     def __init__(self):
         QObject.__init__(self)
         self.cells = [[Cell() for x in range(self.CELL_COUNT)] for y in range(self.CELL_COUNT)]
         self.flags = self.MINE_COUNT
         self.reset()
+
+    def restart_game(self):
+        self.reset()
+        self.gameReset.emit()
+
+    def set_flags_count(self, count):
+        self.flags = count
+        self.flagsCountChanged.emit(self.flags)
 
     def open_cells_recursively(self, i, j):
         cell = self.cells[i][j]
@@ -52,7 +62,7 @@ class GameController(QObject):
         return count
 
     def reset(self):
-        self.flags = self.MINE_COUNT
+        self.set_flags_count(self.MINE_COUNT)
         count = self.MINE_COUNT
         # reset all fields
         for i in range(self.CELL_COUNT):
